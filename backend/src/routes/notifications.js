@@ -9,6 +9,13 @@ router.get("/", protect, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.patch("/read-all", protect, async (req, res, next) => {
+  try {
+    await Notification.updateMany({ userId: req.user._id, read: false }, { read: true });
+    res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
 router.patch("/:id/read", protect, async (req, res, next) => {
   try {
     const row = await Notification.findOneAndUpdate(

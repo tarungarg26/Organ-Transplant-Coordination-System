@@ -23,7 +23,7 @@ function bloodCompatible(donor, recipient) {
     "AB-": ["O-", "A-", "B-", "AB-"],
     "AB+": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
   };
-  return Boolean(map[donor.bloodType]?.includes(recipient.bloodType));
+  return Boolean(map[recipient.bloodType]?.includes(donor.bloodType));
 }
 
 function hlaScore(donorHla = "", recipientHla = "") {

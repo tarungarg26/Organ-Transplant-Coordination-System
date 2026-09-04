@@ -31,7 +31,7 @@ router.get("/compliance.csv", protect, allowRoles("ADMIN", "OPO", "AUDITOR", "CO
   } catch (e) { next(e); }
 });
 
-router.get("/audit", protect, allowRoles("ADMIN", "OPO", "AUDITOR"), async (req, res, next) => {
+router.get("/audit", protect, allowRoles("ADMIN", "OPO", "AUDITOR", "COORDINATOR"), async (req, res, next) => {
   try {
     res.json(await AuditLog.find().sort({ createdAt: -1 }).limit(500));
   } catch (e) { next(e); }

@@ -44,7 +44,7 @@ export default function Reports() {
     <div className="page">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">FR11 · NFR7</span>
+          <span className="eyebrow">GOVERNANCE</span>
           <h2>Compliance & audit</h2>
           <p>Review match decisions and export a compliance report.</p>
         </div>

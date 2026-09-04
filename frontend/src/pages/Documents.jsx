@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { FileText, Upload, Download, Search } from 'lucide-react';
 import api from "../api";
+import EmptyState from "../components/EmptyState";
+import { useToast } from "../components/Toast";
 
 export default function Documents() {
   const [docs, setDocs] = useState([]);
   const [file, setFile] = useState(null);
   const [type, setType] = useState("Medical Report");
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const { showToast } = useToast();
 
   const load = () => {
     api.get("/documents")
@@ -26,7 +31,6 @@ export default function Documents() {
       return;
     }
     setError("");
-    setMessage("");
     setUploading(true);
     try {
       const data = new FormData();
@@ -35,12 +39,17 @@ export default function Documents() {
       data.append("entityType", "TRANSPORT");
       await api.post("/documents/upload", data);
       setFile(null);
-      setMessage("Document uploaded successfully!");
-      // Reset the file input element if needed
+      showToast({
+        title: "Document archived",
+        message: `${file.name} uploaded successfully as ${type}.`,
+        type: "success"
+      });
       e.target.reset();
       load();
     } catch (err) {
-      setError(err.response?.data?.message || "Upload failed");
+      const msg = err.response?.data?.message || "Upload failed";
+      setError(msg);
+      showToast({ title: "Upload failed", message: msg, type: "error" });
     } finally {
       setUploading(false);
     }
@@ -48,6 +57,7 @@ export default function Documents() {
 
   const downloadDoc = async (id, fileName) => {
     try {
+      showToast({ title: "Downloading", message: `Retrieving ${fileName}...`, type: "info" });
       const res = await api.get(`/documents/${id}/download`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement("a");
@@ -58,23 +68,36 @@ export default function Documents() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to download document");
+      showToast({ title: "Download failed", message: "Could not fetch document file.", type: "error" });
     }
   };
+
+  const filteredDocs = useMemo(() => {
+    return docs.filter(d => {
+      if (typeFilter !== "ALL" && d.documentType !== typeFilter) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const name = (d.fileName || "").toLowerCase();
+        const by = (d.uploadedBy?.name || "").toLowerCase();
+        return name.includes(q) || by.includes(q);
+      }
+      return true;
+    });
+  }, [docs, typeFilter, search]);
 
   return (
     <div className="page">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">FR9 · DOCUMENT MANAGEMENT</span>
-          <h2>Documents</h2>
-          <p>Store consent, medical, laboratory and transport documents for the workflow.</p>
+          <span className="eyebrow">RECORDS & COMPLIANCE</span>
+          <h2>Clinical documents</h2>
+          <p>Store, authenticate, and download consent, laboratory reports, HLA documentation, and transport chain-of-custody.</p>
         </div>
       </div>
 
-      {message && <div className="success-box">{message}</div>}
       {error && <div className="error-box">{error}</div>}
 
+      {/* Upload Panel */}
       <form className="panel upload-row" onSubmit={upload}>
         <select value={type} onChange={e => setType(e.target.value)}>
           <option>Medical Report</option>
@@ -84,54 +107,101 @@ export default function Documents() {
           <option>Other</option>
         </select>
         <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} />
-        <button className="primary-button" disabled={uploading || !file}>
-          {uploading ? "Uploading..." : "Upload"}
+        <button className="primary-button compact-button" disabled={uploading || !file}>
+          <Upload size={14} style={{ marginRight: 5 }} />
+          {uploading ? "Uploading..." : "Upload document"}
         </button>
       </form>
 
+      {/* Document Library Panel */}
       <div className="panel">
         <div className="panel-title">
-          <h3>Uploaded documents</h3>
-          <span>{docs.length} documents</span>
+          <div>
+            <h3>Document repository</h3>
+            <span style={{ fontSize: 11, color: "var(--muted)" }}>{docs.length} verified records</span>
+          </div>
+
+          <div className="search-input-wrap" style={{ maxWidth: 220 }}>
+            <Search size={13} className="search-icon-inside" />
+            <input
+              type="text"
+              placeholder="Search documents..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ padding: '6px 10px 6px 28px', fontSize: 11 }}
+            />
+          </div>
         </div>
+
+        {/* Filter Pills */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
+          {["ALL", "Medical Report", "Consent Form", "Laboratory Report", "Transport Document", "Other"].map(t => (
+            <button
+              key={t}
+              type="button"
+              className={`filter-pill${typeFilter === t ? " active" : ""}`}
+              onClick={() => setTypeFilter(t)}
+              style={{ fontSize: 10, padding: '3px 8px' }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>File name</th>
-                <th>Type</th>
+                <th>Classification</th>
                 <th>Uploaded by</th>
-                <th>Size</th>
+                <th>File size</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {docs.map(d => (
+              {filteredDocs.map(d => (
                 <tr key={d._id}>
-                  <td><strong>{d.fileName}</strong></td>
-                  <td>{d.documentType}</td>
-                  <td>{d.uploadedBy?.name || "Staff"}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <FileText size={15} color="var(--brand)" />
+                      <strong>{d.fileName}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="badge" style={{ fontSize: 11 }}>
+                      {d.documentType}
+                    </span>
+                  </td>
+                  <td>{d.uploadedBy?.name || "Hospital Staff"}</td>
                   <td>{Math.round((d.size || 0) / 1024)} KB</td>
                   <td>
                     <button
-                      className="secondary-button"
-                      style={{ padding: "4px 8px", fontSize: "11px" }}
+                      type="button"
+                      className="secondary-button compact-button"
                       onClick={() => downloadDoc(d._id, d.fileName)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                     >
+                      <Download size={12} />
                       Download
                     </button>
                   </td>
                 </tr>
               ))}
-              {!docs.length && (
-                <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "20px", color: "var(--muted)" }}>
-                    No documents uploaded yet.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
+
+          {!filteredDocs.length && (
+            <div style={{ padding: '30px 12px' }}>
+              <EmptyState
+                icon={FileText}
+                title="No clinical documents found"
+                description="Upload medical or consent files using the file picker above, or reset your search filter."
+                actionLabel={typeFilter !== "ALL" || search ? "Clear filters" : undefined}
+                onAction={() => { setTypeFilter("ALL"); setSearch(""); }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

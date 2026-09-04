@@ -19,7 +19,7 @@ export default class ErrorBoundary extends React.Component {
       return (
         <div className="page" style={{ padding: '40px', textAlign: 'center' }}>
           <div className="panel" style={{ maxWidth: '500px', margin: '40px auto', padding: '30px' }}>
-            <h2 style={{ color: '#c0392b', marginBottom: '10px' }}>Something went wrong</h2>
+            <h2 style={{ color: 'var(--danger)', marginBottom: '10px' }}>Something went wrong</h2>
             <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>
               {this.state.error?.message || 'An unexpected error occurred while rendering this page.'}
             </p>

@@ -119,8 +119,7 @@ export default function Users() {
                   </td>
                   <td>
                     <button
-                      className="secondary-button"
-                      style={{ padding: "4px 8px", fontSize: "11px" }}
+                      className="secondary-button compact-button"
                       onClick={() => toggle(u._id)}
                     >
                       {u.active ? "Deactivate" : "Activate"}

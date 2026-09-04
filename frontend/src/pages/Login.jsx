@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth";
-import { HeartPulse, ShieldCheck, ArrowRight } from "lucide-react";
+import { HeartPulse, ShieldCheck, ArrowRight, Activity, Truck, Users } from "lucide-react";
 
 export default function Login() {
   const { login, user } = useAuth();
@@ -45,92 +45,119 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <div className="login-panel">
-        <div className="login-brand"><HeartPulse size={32}/><strong>OTCS</strong></div>
-        <h1>Secure coordination portal</h1>
-        <p>Connect hospital teams, coordinators and transport operations around the transplant workflow.</p>
-
-        {user && (
-          <div style={{
-            background: "#eff6ff",
-            border: "1px solid #bfdbfe",
-            borderRadius: "10px",
-            padding: "10px 14px",
-            marginBottom: "14px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "12px"
-          }}>
-            <span>Active session: <strong>{user.name}</strong> ({user.role})</span>
-            <button
-              type="button"
-              className="primary-button"
-              style={{ padding: "5px 11px", fontSize: "11px", display: "inline-flex", alignItems: "center", gap: "5px" }}
-              onClick={() => navigate("/dashboard")}
-            >
-              Enter Dashboard <ArrowRight size={13} />
-            </button>
+      <section className="login-hero">
+        <div className="orb orb-a" />
+        <div className="orb orb-b" />
+        <div className="login-hero-copy">
+          <div className="login-kicker">
+            <HeartPulse size={16} /> OTCS · Clinical operations
           </div>
-        )}
+          <h1>Coordinate every transplant minute with clarity.</h1>
+          <p>
+            One workspace for donor intake, candidate ranking, allocation decisions,
+            and live organ transport — built for hospital, coordinator, and dispatch teams.
+          </p>
+          <div className="login-steps">
+            <div className="login-step">
+              <div className="step-num">1</div>
+              <div>
+                <strong>Register</strong>
+                <div style={{ fontSize: 12, color: "#9bb8be" }}>Donor and candidate profiles</div>
+              </div>
+              <Users size={16} style={{ marginLeft: "auto", opacity: 0.7 }} />
+            </div>
+            <div className="login-step">
+              <div className="step-num">2</div>
+              <div>
+                <strong>Match</strong>
+                <div style={{ fontSize: 12, color: "#9bb8be" }}>Ranked compatibility review</div>
+              </div>
+              <Activity size={16} style={{ marginLeft: "auto", opacity: 0.7 }} />
+            </div>
+            <div className="login-step">
+              <div className="step-num">3</div>
+              <div>
+                <strong>Track</strong>
+                <div style={{ fontSize: 12, color: "#9bb8be" }}>Pickup, transit, delivery</div>
+              </div>
+              <Truck size={16} style={{ marginLeft: "auto", opacity: 0.7 }} />
+            </div>
+          </div>
+        </div>
+        <p style={{ position: "relative", zIndex: 1, fontSize: 12, color: "#7fa3ab", margin: 0 }}>
+          Academic demonstration system · Not for clinical decision-making
+        </p>
+      </section>
 
-        <form onSubmit={submit} className="form-card">
-          <label>Email
-            <input 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              type="email" 
-              required
-              disabled={submitting}
-            />
-          </label>
-          <label>Password
-            <input 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              type="password" 
-              required
-              disabled={submitting}
-            />
-          </label>
-          {error && <div className="error-box">{error}</div>}
-          <button className="primary-button" type="submit" disabled={submitting}>
-            {submitting ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
+      <section className="login-form-side">
+        <div className="login-panel">
+          <div className="login-brand"><HeartPulse size={28}/><strong>OTCS</strong></div>
+          <h2>Sign in to continue</h2>
+          <p>Use a demo role below, or enter credentials for your workspace account.</p>
 
-        <div style={{ marginTop: "14px", display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
-          <span style={{ fontSize: "11px", color: "var(--muted)", fontWeight: 600 }}>Quick select:</span>
-          {demoAccounts.map(account => (
-            <button
-              key={account.role}
-              type="button"
-              onClick={() => {
-                setEmail(account.email);
-                setPassword("Password@123");
-                setError("");
-              }}
-              style={{
-                fontSize: "11px",
-                padding: "3px 8px",
-                borderRadius: "6px",
-                border: "1px solid #dce2eb",
-                background: email === account.email ? "#eaf2ff" : "#fff",
-                color: email === account.email ? "#1d4ed8" : "#4b5563",
-                fontWeight: email === account.email ? 700 : 500,
-                cursor: "pointer"
-              }}
-            >
-              {account.role}
+          {user && (
+            <div className="session-banner">
+              <span>Active session: <strong>{user.name}</strong> ({user.role})</span>
+              <button
+                type="button"
+                className="primary-button"
+                style={{ padding: "5px 11px", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 5 }}
+                onClick={() => navigate("/dashboard")}
+              >
+                Enter Dashboard <ArrowRight size={13} />
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={submit} className="form-card">
+            <label>Email
+              <input
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                type="email"
+                required
+                disabled={submitting}
+              />
+            </label>
+            <label>Password
+              <input
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                type="password"
+                required
+                disabled={submitting}
+              />
+            </label>
+            {error && <div className="error-box">{error}</div>}
+            <button className="primary-button" type="submit" disabled={submitting}>
+              {submitting ? "Signing in..." : "Sign in"}
             </button>
-          ))}
-        </div>
+          </form>
 
-        <div className="demo-box">
-          <ShieldCheck size={18}/>
-          <span>Demo accounts are documented in README.md. Default password: <code>Password@123</code></span>
+          <div className="quick-select">
+            <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600 }}>Quick select:</span>
+            {demoAccounts.map(account => (
+              <button
+                key={account.role}
+                type="button"
+                className={`chip${email === account.email ? " active" : ""}`}
+                onClick={() => {
+                  setEmail(account.email);
+                  setPassword("Password@123");
+                  setError("");
+                }}
+              >
+                {account.role}
+              </button>
+            ))}
+          </div>
+
+          <div className="demo-box">
+            <ShieldCheck size={18}/>
+            <span>Demo password: <code>Password@123</code></span>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

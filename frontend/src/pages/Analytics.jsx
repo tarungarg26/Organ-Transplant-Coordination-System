@@ -25,7 +25,7 @@ export default function Analytics() {
     <div className="page">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">FR11 · ANALYTICS</span>
+          <span className="eyebrow">INSIGHTS</span>
           <h2>Analytics dashboard</h2>
           <p>Operational indicators for transplant coordination and transport performance.</p>
         </div>

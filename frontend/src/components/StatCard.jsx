@@ -1,4 +1,5 @@
 import React from 'react';
+
 export default function StatCard({ label, value, icon: Icon }) {
   return (
     <div className="stat-card">
@@ -6,7 +7,11 @@ export default function StatCard({ label, value, icon: Icon }) {
         <p>{label}</p>
         <h2>{value}</h2>
       </div>
-      {Icon && <Icon size={26} />}
+      {Icon && (
+        <div className="stat-icon">
+          <Icon size={22} />
+        </div>
+      )}
     </div>
   );
 }

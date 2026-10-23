@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Check, X, ShieldAlert, Sparkles, Search, ClipboardList } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, X, ShieldAlert, Sparkles, Search, ClipboardList, Printer } from 'lucide-react';
 import api from "../api";
 import StatusBadge from "../components/StatusBadge";
 import EmptyState from "../components/EmptyState";
+import AllocationManifestModal from "../components/AllocationManifestModal";
 import { useToast } from "../components/Toast";
 
 const REJECTION_REASONS = [
@@ -24,6 +25,7 @@ export default function Matches() {
   const [evaluating, setEvaluating] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [historySearch, setHistorySearch] = useState("");
+  const [manifestMatch, setManifestMatch] = useState(null);
   const { showToast } = useToast();
 
   const load = () => {
@@ -392,6 +394,7 @@ export default function Matches() {
                 <th>Score</th>
                 <th>Status</th>
                 <th>Coordinator / Decision</th>
+                <th>Manifest</th>
               </tr>
             </thead>
             <tbody>
@@ -415,11 +418,26 @@ export default function Matches() {
                       m.rejectionReason || m.coordinator?.name || "Pending"
                     )}
                   </td>
+                  <td>
+                    {m.status === "CONFIRMED" ? (
+                      <button
+                        type="button"
+                        className="ghost-btn"
+                        onClick={() => setManifestMatch(m)}
+                        style={{ fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px" }}
+                        title="View official allocation manifest and print"
+                      >
+                        <Printer size={12} /> Manifest
+                      </button>
+                    ) : (
+                      <span style={{ color: "var(--muted)", fontSize: 11 }}>—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
               {!filteredMatches.length && (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "30px", color: "var(--muted)" }}>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "30px", color: "var(--muted)" }}>
                     No decision records match your search.
                   </td>
                 </tr>
@@ -428,6 +446,13 @@ export default function Matches() {
           </table>
         </div>
       </div>
+
+      {manifestMatch && (
+        <AllocationManifestModal
+          match={manifestMatch}
+          onClose={() => setManifestMatch(null)}
+        />
+      )}
     </div>
   );
 }

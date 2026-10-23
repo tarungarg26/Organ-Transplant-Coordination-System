@@ -17,7 +17,8 @@ import {
   X,
   Menu,
   ChevronDown,
-  UserCheck
+  UserCheck,
+  Activity
 } from "lucide-react";
 import { useAuth } from "../auth";
 import { socket } from "../socket";
@@ -177,6 +178,7 @@ export default function Layout() {
           {(role === "HOSPITAL" || role === "ADMIN" || role === "COORDINATOR") && link("/recipients", "Recipients", Users)}
           {(role === "COORDINATOR" || role === "OPO" || role === "ADMIN") && link("/matches", "Matching", ClipboardList)}
           {(role === "TRANSPORT" || role === "COORDINATOR" || role === "ADMIN") && link("/transports", "Transport", Map)}
+          {(role === "HOSPITAL" || role === "COORDINATOR" || role === "ADMIN") && link("/outcomes", "Outcomes", Activity)}
           {link("/documents", "Documents", FileText)}
           {(role === "COORDINATOR" || role === "OPO" || role === "AUDITOR" || role === "ADMIN") && link("/analytics", "Analytics", BarChart3)}
           {(role === "COORDINATOR" || role === "OPO" || role === "AUDITOR" || role === "ADMIN") && link("/reports", "Compliance", ShieldCheck)}

@@ -24,13 +24,16 @@ The implementation also includes the supporting modules from the project scenari
 - Coordinator dashboard
 - Real-time Socket.IO notifications
 - Transport status and elapsed-time tracking
-- Cold-ischemia warning logic for the demo
+- Autonomous Cold-Ischemia Alert Daemon & organ-specific limits
+- Interactive GPS route radar & simulation step
+- Official Printable Allocation & Chain-of-Custody Manifest
 - Document upload/download
-- Post-transplant outcome recording API
-- Analytics dashboard
+- Post-transplant outcome recording UI & API (FR10)
+- Analytics dashboard with SVG visual charts
 - Compliance CSV report
 - Audit log
 - Administrator user management
+- Automated Unit Test Suite (22 tests)
 
 ## 2. Traceability to your submitted documents
 
@@ -42,18 +45,19 @@ The implementation also includes the supporting modules from the project scenari
 | FR4 | ranked `MatchAllocation` records |
 | FR5 | `POST /api/matches/:id/confirm`, `POST /api/matches/:id/reject` |
 | FR6 | Socket.IO notifications after confirmation |
-| FR7 | `OrganTransport`, transport update API and UI |
+| FR7 | `OrganTransport`, transport update API, GPS radar and UI |
 | FR8 | recipient re-ranking in `recipients.js` |
 | FR9 | document module |
-| FR10 | `PostTransplantOutcome` model/API |
-| FR11 | analytics + compliance report |
+| FR10 | `PostTransplantOutcome` model/API, `frontend/src/pages/Outcomes.jsx` |
+| FR11 | analytics + compliance report + SVG visual charts |
 | FR12 | role-based navigation/dashboard |
 | NFR3 | JWT authentication, role checks, demo-local storage |
 | NFR7 | `AuditLog` model and audit utility |
 | UC1 | Donor registration screen/API |
 | UC2 | Recipient registration screen/API |
-| UC3 | Matching + confirmation/rejection + transport creation |
-| UC4 | Transport status, checkpoints, delivery and alerts |
+| UC3 | Matching + confirmation/rejection + transport creation + manifest |
+| UC4 | Transport status, checkpoints, delivery, simulated GPS and CIT daemon |
+
 
 Your class diagram defines `Person`, `Donor`, `Recipient`, `Hospital`, `TransplantCoordinator`, `MatchAllocation`, `OrganTransport`, `ComplianceReport`, and `INotificationService`. The implementation maps the persistent/active concepts to MongoDB models and services. The interaction sequence of review → validate → confirm → create transport → notify → track → deliver is implemented across the match and transport routes.
 
@@ -91,7 +95,8 @@ otcs-mvp/
 │       │   └── errorHandler.js
 │       ├── utils/
 │       │   ├── audit.js
-│       │   └── matching.js
+│       │   ├── matching.js
+│       │   └── matching.test.js
 │       ├── models/
 │       │   ├── User.js
 │       │   ├── Donor.js
@@ -127,10 +132,16 @@ otcs-mvp/
         ├── auth.jsx
         ├── styles.css
         ├── components/
+        │   ├── AllocationManifestModal.jsx
+        │   ├── ColdIschemiaGauge.jsx
+        │   ├── EmptyState.jsx
+        │   ├── ErrorBoundary.jsx
         │   ├── Layout.jsx
         │   ├── ProtectedRoute.jsx
         │   ├── StatCard.jsx
-        │   └── StatusBadge.jsx
+        │   ├── StatusBadge.jsx
+        │   ├── Toast.jsx
+        │   └── TransportStepper.jsx
         └── pages/
             ├── Login.jsx
             ├── Dashboard.jsx
@@ -138,11 +149,37 @@ otcs-mvp/
             ├── Recipients.jsx
             ├── Matches.jsx
             ├── Transports.jsx
+            ├── Outcomes.jsx
             ├── Documents.jsx
             ├── Analytics.jsx
             ├── Reports.jsx
             └── Users.jsx
 ```
+
+## 5. Automated Unit Testing
+
+The repository contains an automated test suite verifying matching algorithms, ABO blood compatibility matrices, HLA typing distance, clinical urgency tiers, and organ-specific cold ischemia limits.
+
+To run the unit tests:
+
+```bash
+# Run from repository root
+npm test
+```
+
+Expected output:
+```text
+✔ ABO Blood Compatibility Matrix (universal donor/receiver + mismatch validation)
+✔ HLA Matching Algorithm (exact, partial, and divergent typing)
+✔ Urgency and Wait Time Scoring (monotonic priority order)
+✔ Geographic Proximity (Haversine great-circle calculation)
+✔ Organ-Specific Cold Ischemia Time Limits (Heart, Lung, Liver, Kidney, Cornea)
+✔ End-to-End Compatibility Evaluation
+ℹ tests 22
+ℹ pass 22
+ℹ fail 0
+```
+
 
 ## 5. Prerequisites
 

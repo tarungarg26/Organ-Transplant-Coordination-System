@@ -14,6 +14,7 @@ import Documents from "./pages/Documents";
 import Analytics from "./pages/Analytics";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
+import Outcomes from "./pages/Outcomes";
 import "./styles.css";
 
 import { ToastProvider } from "./components/Toast";
@@ -33,6 +34,7 @@ export default function App() {
                 <Route path="/recipients" element={<ProtectedRoute roles={["HOSPITAL", "ADMIN", "COORDINATOR"]}><Recipients /></ProtectedRoute>} />
                 <Route path="/matches" element={<ProtectedRoute roles={["COORDINATOR", "OPO", "ADMIN"]}><Matches /></ProtectedRoute>} />
                 <Route path="/transports" element={<ProtectedRoute roles={["TRANSPORT", "COORDINATOR", "ADMIN"]}><Transports /></ProtectedRoute>} />
+                <Route path="/outcomes" element={<ProtectedRoute roles={["HOSPITAL", "COORDINATOR", "ADMIN"]}><Outcomes /></ProtectedRoute>} />
                 <Route path="/documents" element={<Documents />} />
                 <Route path="/analytics" element={<ProtectedRoute roles={["COORDINATOR", "OPO", "AUDITOR", "ADMIN"]}><Analytics /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute roles={["COORDINATOR", "OPO", "AUDITOR", "ADMIN"]}><Reports /></ProtectedRoute>} />

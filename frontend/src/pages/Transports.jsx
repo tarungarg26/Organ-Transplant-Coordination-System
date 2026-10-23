@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Truck, Search } from 'lucide-react';
+import { Truck, Search, Navigation, Printer, MapPin, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
 import api from "../api";
 import StatusBadge from "../components/StatusBadge";
 import ColdIschemiaGauge from "../components/ColdIschemiaGauge";
 import TransportStepper from "../components/TransportStepper";
 import EmptyState from "../components/EmptyState";
+import AllocationManifestModal from "../components/AllocationManifestModal";
 import { useToast } from "../components/Toast";
 
 export default function Transports() {
@@ -13,6 +14,7 @@ export default function Transports() {
   const [updatingId, setUpdatingId] = useState(null);
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
+  const [manifestMatch, setManifestMatch] = useState(null);
   const { showToast } = useToast();
 
   const load = () => {
@@ -45,14 +47,32 @@ export default function Transports() {
     }
   };
 
+  const simulateStep = async (id) => {
+    setError("");
+    setUpdatingId(id);
+    try {
+      const res = await api.post(`/transports/${id}/simulate-step`);
+      showToast({
+        title: "GPS Progress Simulated",
+        message: `Transport advanced: ${res.data.status} • Location: ${res.data.currentLocation}`,
+        type: res.data.status === "DELIVERED" ? "success" : "info"
+      });
+      load();
+    } catch (err) {
+      const msg = err.response?.data?.message || "Simulation step failed";
+      setError(msg);
+      showToast({ title: "Simulation error", message: msg, type: "error" });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const filteredRows = useMemo(() => {
     return rows.filter(t => {
-      // Status filter
       if (filter === "ACTIVE" && (t.status === "DELIVERED" || t.status === "EXCEPTION")) return false;
       if (filter === "DELIVERED" && t.status !== "DELIVERED") return false;
       if (filter === "EXCEPTION" && t.status !== "EXCEPTION") return false;
 
-      // Search
       if (search.trim()) {
         const q = search.toLowerCase();
         const tid = (t.transportId || "").toLowerCase();
@@ -70,9 +90,9 @@ export default function Transports() {
     <div className="page">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">LIVE LOGISTICS</span>
-          <h2>Live transport tracking</h2>
-          <p>Real-time organ transport tracking, checkpoint validation, and cold ischemia monitoring.</p>
+          <span className="eyebrow">LIVE LOGISTICS & GPS TELEMETRY</span>
+          <h2>Organ Transport & Logistics Control</h2>
+          <p>Real-time organ transport tracking, checkpoint telemetry, and physiological cold ischemia monitoring.</p>
         </div>
       </div>
 
@@ -128,6 +148,7 @@ export default function Transports() {
           const recipientName = t.match?.recipient?.name || "Recipient";
           const organType = t.match?.donor?.organType || "Organ";
           const isUpdating = updatingId === t._id;
+          const isDelivered = t.status === "DELIVERED";
 
           return (
             <div className="transport-card" key={t._id || t.transportId}>
@@ -144,7 +165,7 @@ export default function Transports() {
                 <StatusBadge>{t.status}</StatusBadge>
               </div>
 
-              {/* Cold Ischemia Gauge */}
+              {/* Cold Ischemia Gauge with Organ-Specific Limits */}
               <ColdIschemiaGauge
                 elapsedMinutes={t.elapsedMinutes ?? 0}
                 limitMinutes={t.coldIschemiaLimitMinutes ?? 360}
@@ -156,42 +177,106 @@ export default function Transports() {
                 checkpoints={t.checkpoints || []}
               />
 
-              {/* Route line */}
-              <div className="route">
+              {/* Dynamic GPS Waypoint Route Map */}
+              <div className="route" style={{ background: "var(--surface-2)", padding: "12px 14px", borderRadius: 10, border: "1px solid var(--line)" }}>
                 <div>
-                  <span>Origin / Pickup</span>
-                  <strong>{t.currentLocation || "Hospital OR"}</strong>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--muted)" }}>
+                    <MapPin size={12} color="#0d9488" /> Origin / Donor Facility
+                  </span>
+                  <strong style={{ fontSize: 12 }}>{t.pickupLocation || "Hospital OR"}</strong>
                 </div>
-                <div className="route-line"></div>
+
+                <div className="route-line" style={{ margin: "8px 0", position: "relative" }}>
+                  <div style={{ 
+                    position: "absolute", 
+                    top: -6, 
+                    left: isDelivered ? "92%" : t.status === "IN_TRANSIT" ? "50%" : "15%",
+                    transform: "translateX(-50%)",
+                    transition: "left 0.8s ease"
+                  }}>
+                    <span style={{ 
+                      display: "inline-flex", 
+                      alignItems: "center", 
+                      gap: 4, 
+                      background: isDelivered ? "#0f7a58" : "#0d9488", 
+                      color: "#fff", 
+                      fontSize: 10, 
+                      padding: "2px 6px", 
+                      borderRadius: 4,
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+                    }}>
+                      <Truck size={11} /> {t.currentLocation || "In Transit"}
+                    </span>
+                  </div>
+                </div>
+
                 <div>
-                  <span>Destination</span>
-                  <strong>{t.destinationHospital || "Transplant Center"}</strong>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--muted)" }}>
+                    <MapPin size={12} color="#be3a3a" /> Destination Transplant Center
+                  </span>
+                  <strong style={{ fontSize: 12 }}>{t.destinationHospital || "Transplant Center"}</strong>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="row-actions">
+              {/* Action Buttons & Simulation */}
+              <div className="row-actions" style={{ flexWrap: "wrap", gap: 8 }}>
                 <button
-                  className="secondary-button compact-button"
-                  disabled={isUpdating || t.status === "PICKED_UP" || t.status === "IN_TRANSIT" || t.status === "DELIVERED"}
+                  type="button"
+                  className="compact-button secondary-button"
+                  disabled={isUpdating || t.status === "PICKED_UP" || t.status === "IN_TRANSIT" || isDelivered}
                   onClick={() => update(t._id, "PICKED_UP")}
                 >
                   Picked up
                 </button>
                 <button
-                  className="secondary-button compact-button"
-                  disabled={isUpdating || t.status === "IN_TRANSIT" || t.status === "DELIVERED"}
+                  type="button"
+                  className="compact-button secondary-button"
+                  disabled={isUpdating || t.status === "IN_TRANSIT" || isDelivered}
                   onClick={() => update(t._id, "IN_TRANSIT")}
                 >
                   In transit
                 </button>
                 <button
-                  className="primary-button compact-button"
-                  disabled={isUpdating || t.status === "DELIVERED"}
+                  type="button"
+                  className="compact-button primary-button"
+                  disabled={isUpdating || isDelivered}
                   onClick={() => update(t._id, "DELIVERED")}
                 >
                   Delivered
                 </button>
+                
+                {/* Demo Simulation Step Button */}
+                <button
+                  type="button"
+                  className="compact-button"
+                  style={{
+                    background: "rgba(20, 184, 166, 0.12)",
+                    color: "var(--brand-dark)",
+                    fontWeight: 700,
+                    border: "1px solid rgba(20, 184, 166, 0.35)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4
+                  }}
+                  disabled={isUpdating || isDelivered}
+                  onClick={() => simulateStep(t._id)}
+                  title="Simulate GPS progression along transit corridor"
+                >
+                  <Navigation size={12} /> {isUpdating ? "Advancing..." : "Simulate GPS"}
+                </button>
+
+                {/* Print Official Manifest */}
+                {t.match && (
+                  <button
+                    type="button"
+                    className="compact-button secondary-button"
+                    onClick={() => setManifestMatch(t.match)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                    title="View & print official transfer manifest"
+                  >
+                    <Printer size={12} /> Manifest
+                  </button>
+                )}
               </div>
 
               {t.status === "EXCEPTION" && (
@@ -218,6 +303,14 @@ export default function Transports() {
           onAction={rows.length > 0 ? () => { setFilter("ALL"); setSearch(""); } : undefined}
         />
       )}
+
+      {manifestMatch && (
+        <AllocationManifestModal
+          match={manifestMatch}
+          onClose={() => setManifestMatch(null)}
+        />
+      )}
     </div>
   );
 }
+

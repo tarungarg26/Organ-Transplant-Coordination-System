@@ -5,7 +5,7 @@ const MatchAllocation = require("../models/MatchAllocation");
 const OrganTransport = require("../models/OrganTransport");
 const Notification = require("../models/Notification");
 const { protect, allowRoles } = require("../middleware/auth");
-const { compatibility } = require("../utils/matching");
+const { compatibility, getColdIschemiaLimit } = require("../utils/matching");
 const audit = require("../utils/audit");
 
 function makeId(prefix) {
@@ -103,12 +103,15 @@ router.post("/:id/confirm", protect, allowRoles("COORDINATOR", "ADMIN"), async (
       { status: "REJECTED", rejectionReason: "Another candidate confirmed" }
     );
 
+    const organLimit = getColdIschemiaLimit(match.donor?.organType);
+
     const transport = await OrganTransport.create({
       transportId: makeId("TRN"),
       match: match._id,
-      pickupLocation: match.donor.location?.label || match.donor.hospitalName || "Donor hospital",
-      destinationHospital: match.recipient.hospitalName || "Recipient hospital",
-      currentLocation: match.donor.location?.label || match.donor.hospitalName || "Pickup pending",
+      pickupLocation: match.donor?.location?.label || match.donor?.hospitalName || "Donor hospital",
+      destinationHospital: match.recipient?.hospitalName || "Recipient hospital",
+      currentLocation: match.donor?.location?.label || match.donor?.hospitalName || "Pickup pending",
+      coldIschemiaLimitMinutes: organLimit,
       status: "READY",
       lastCheckpointAt: new Date()
     });

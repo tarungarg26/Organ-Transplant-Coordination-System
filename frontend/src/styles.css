@@ -1105,3 +1105,28 @@ textarea { min-height: 82px; resize: vertical; }
 .legend-item { display: inline-flex; align-items: center; gap: 4px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
 
+/* ——— Print Media Rules for Official Manifests ——— */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-manifest,
+  .printable-manifest * {
+    visibility: visible;
+  }
+  .printable-manifest {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .no-print, .sidebar, .topbar, .modal-backdrop, .toast-container {
+    display: none !important;
+  }
+}
+
+

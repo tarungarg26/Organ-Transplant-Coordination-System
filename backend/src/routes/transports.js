@@ -93,4 +93,61 @@ router.post("/:id/exception", protect, allowRoles("TRANSPORT", "COORDINATOR", "A
   } catch (e) { next(e); }
 });
 
+router.post("/:id/simulate-step", protect, allowRoles("TRANSPORT", "COORDINATOR", "ADMIN"), async (req, res, next) => {
+  try {
+    const transport = await OrganTransport.findById(req.params.id);
+    if (!transport) return res.status(404).json({ message: "Transport not found" });
+
+    if (transport.status === "DELIVERED") {
+      return res.status(400).json({ message: "Transport is already delivered" });
+    }
+
+    let nextStatus = transport.status;
+    let nextLoc = transport.currentLocation;
+
+    if (transport.status === "READY") {
+      nextStatus = "PICKED_UP";
+      nextLoc = "En route to air/ground logistics hub";
+      if (!transport.startedAt) transport.startedAt = new Date();
+    } else if (transport.status === "PICKED_UP") {
+      nextStatus = "IN_TRANSIT";
+      nextLoc = "Priority transit corridor (GPS Waypoint A-4)";
+      if (!transport.startedAt) transport.startedAt = new Date();
+    } else if (transport.status === "IN_TRANSIT") {
+      const transitCheckpoints = transport.checkpoints.filter(c => c.status === "IN_TRANSIT").length;
+      if (transitCheckpoints < 2) {
+        nextStatus = "IN_TRANSIT";
+        nextLoc = "Approaching recipient surgical center (ETA: 15m)";
+      } else {
+        nextStatus = "DELIVERED";
+        nextLoc = transport.destinationHospital || "Recipient OR Suite";
+        transport.deliveredAt = new Date();
+      }
+    }
+
+    transport.status = nextStatus;
+    transport.currentLocation = nextLoc;
+    transport.lastCheckpointAt = new Date();
+    transport.checkpoints.push({
+      status: nextStatus,
+      location: nextLoc,
+      timestamp: new Date()
+    });
+
+    await transport.save();
+
+    const elapsed = elapsedMinutes(transport);
+    const io = req.app.get("io");
+    if (io) io.emit("transport-updated", { ...transport.toObject(), elapsedMinutes: elapsed });
+
+    await audit(req.user, "SIMULATE_TRANSPORT_STEP", "TRANSPORT", transport._id, {
+      status: nextStatus,
+      location: nextLoc
+    });
+
+    res.json({ ...transport.toObject(), elapsedMinutes: elapsed });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
+

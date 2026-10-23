@@ -88,4 +88,32 @@ function compatibility(donor, recipient) {
   };
 }
 
-module.exports = { compatibility, haversine };
+const ORGAN_COLD_ISCHEMIA_LIMITS = {
+  Heart: 240,       // 4 hours
+  Lung: 360,        // 6 hours
+  Liver: 720,       // 12 hours
+  Pancreas: 720,    // 12 hours
+  Kidney: 1440,     // 24 hours
+  Intestine: 480,   // 8 hours
+  Cornea: 2880,     // 48 hours
+  Tissue: 2880      // 48 hours
+};
+
+function getColdIschemiaLimit(organType) {
+  if (!organType) return 360;
+  const match = Object.keys(ORGAN_COLD_ISCHEMIA_LIMITS).find(
+    k => k.toLowerCase() === String(organType).toLowerCase().trim()
+  );
+  return match ? ORGAN_COLD_ISCHEMIA_LIMITS[match] : 360;
+}
+
+module.exports = {
+  compatibility,
+  haversine,
+  bloodCompatible,
+  hlaScore,
+  urgencyScore,
+  waitScore,
+  ORGAN_COLD_ISCHEMIA_LIMITS,
+  getColdIschemiaLimit
+};
